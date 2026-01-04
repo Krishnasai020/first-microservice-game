@@ -1,0 +1,40 @@
+version: '3.8'
+services:
+  api-gateway:
+    build: ./microservices/api-gateway
+    ports:
+      - "3000:3000"
+    depends_on:
+      - tic-tac-toe
+      - number-guess
+      - sudoku
+    networks:
+      - game-network
+
+  tic-tac-toe:
+    build: ./microservices/tic-tac-toe
+    container_name: tic-tac-toe
+    expose:
+      - "3001"
+    networks:
+      - game-network
+
+  number-guess:
+    build: ./microservices/number-guess
+    container_name: number-guess
+    expose:
+      - "3002"
+    networks:
+      - game-network
+
+  sudoku:
+    build: ./microservices/sudoku
+    container_name: sudoku
+    expose:
+      - "3003"
+    networks:
+      - game-network
+
+networks:
+  game-network:
+    driver: bridge

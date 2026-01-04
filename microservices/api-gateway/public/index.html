@@ -1,0 +1,260 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>🎮 Premium Microservices Games</title>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<style>
+* {margin:0;padding:0;box-sizing:border-box;}
+body {font-family:'Segoe UI',Arial,sans-serif;background:linear-gradient(135deg,#667eea 0%,#764ba2 100%);color:white;min-height:100vh;overflow-x:hidden;}
+.screen {display:none;min-height:100vh;position:relative;}
+.screen.active {display:block;animation:fadeIn 0.5s;}
+@keyframes fadeIn {from{opacity:0;transform:translateY(20px);}to{opacity:1;transform:translateY(0);}}
+
+.glass {background:rgba(255,255,255,0.15);backdrop-filter:blur(20px);border-radius:24px;border:1px solid rgba(255,255,255,0.2);padding:40px;max-width:500px;margin:50px auto;text-align:center;box-shadow:0 20px 40px rgba(0,0,0,0.1);}
+input {width:100%;padding:18px;margin:20px 0;border:none;border-radius:16px;font-size:16px;background:rgba(255,255,255,0.2);color:white;outline:none;}
+input::placeholder {color:rgba(255,255,255,0.7);}
+button {padding:16px 32px;background:linear-gradient(45deg,#ff6b6b,#feca57);color:white;border:none;border-radius:16px;font-size:16px;cursor:pointer;margin:10px;transition:all 0.3s;}
+button:hover {transform:translateY(-3px);box-shadow:0 10px 25px rgba(255,107,107,0.4);}
+button:active {transform:translateY(-1px);}
+
+.games-grid {display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:25px;margin-top:40px;}
+.game-card {background:rgba(255,255,255,0.12);padding:35px;border-radius:24px;cursor:pointer;transition:all 0.4s;border:1px solid rgba(255,255,255,0.1);position:relative;overflow:hidden;}
+.game-card::before {content:'';position:absolute;top:0;left:-100%;width:100%;height:100%;background:linear-gradient(90deg,transparent,rgba(255,255,255,0.2),transparent);transition:0.5s;}
+.game-card:hover::before {left:100%;}
+.game-card:hover {transform:translateY(-12px) scale(1.02);background:rgba(255,255,255,0.22);border-color:rgba(255,255,255,0.3);}
+.game-icon {font-size:4rem;margin-bottom:20px;display:block;}
+.game-title {font-size:1.5rem;margin-bottom:10px;}
+
+.header {display:flex;justify-content:space-between;align-items:center;margin-bottom:40px;padding:0 20px 20px;border-bottom:1px solid rgba(255,255,255,0.15);position:sticky;top:0;background:rgba(255,255,255,0.05);backdrop-filter:blur(10px);z-index:100;}
+.back-btn {background:rgba(255,255,255,0.2);width:55px;height:55px;border-radius:50%;font-size:20px;display:flex;align-items:center;justify-content:center;}
+
+.tic-board {display:grid;grid-template-columns:repeat(3,1fr);gap:12px;max-width:320px;margin:30px auto;}
+.tic-cell {width:100px;height:100px;background:rgba(255,255,255,0.15);border:3px solid rgba(255,255,255,0.3);border-radius:16px;font-size:3rem;font-weight:bold;display:flex;align-items:center;justify-content:center;cursor:pointer;transition:all 0.2s;}
+.tic-cell:hover {background:rgba(255,255,255,0.25);transform:scale(1.05);}
+.tic-cell.x {color:#ff6b6b;animation:pulse 0.3s;}
+.tic-cell.o {color:#4ecdc4;animation:pulse 0.3s;}
+@keyframes pulse {0%{transform:scale(0.9);}50%{transform:scale(1.1);}100%{transform:scale(1);}}
+
+.guess-container {text-align:center;max-width:400px;margin:40px auto;background:rgba(255,255,255,0.1);padding:40px;border-radius:24px;}
+#guessInput {width:250px;padding:20px;font-size:20px;border-radius:20px;margin:20px 0;background:rgba(255,255,255,0.25);color:white;text-align:center;}
+
+.sudoku-grid {display:grid;grid-template-columns:repeat(9,1fr);gap:2px;max-width:500px;margin:20px auto;background:rgba(0,0,0,0.2);padding:15px;border-radius:20px;box-shadow:0 15px 35px rgba(0,0,0,0.2);}
+.sudoku-cell {aspect-ratio:1;border:2px solid rgba(255,255,255,0.2);background:rgba(255,255,255,0.9);color:#333;font-size:1.6rem;font-weight:bold;display:flex;align-items:center;justify-content:center;cursor:pointer;transition:all 0.2s;}
+.sudoku-cell.given {background:rgba(76,175,80,0.9);cursor:default;color:#000;}
+.sudoku-cell:hover:not(.given) {background:rgba(255,193,7,0.9);transform:scale(1.08);}
+
+.sudoku-modal {position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.8);display:none;align-items:center;justify-content:center;z-index:1000;}
+.sudoku-modal.active {display:flex;}
+.modal-content {background:rgba(255,255,255,0.95);backdrop-filter:blur(20px);padding:50px;border-radius:24px;text-align:center;max-width:300px;}
+.modal-number {width:120px;padding:20px;font-size:28px;border-radius:16px;border:3px solid #667eea;margin:20px 0;background:#fff;color:#333;}
+
+.status {text-align:center;margin-top:30px;padding:25px;background:rgba(255,255,255,0.15);border-radius:20px;font-size:1.2rem;min-height:60px;display:flex;align-items:center;justify-content:center;}
+</style>
+</head>
+<body>
+<div id="login-screen" class="screen active">
+  <div class="glass">
+    <div style="font-size:5rem;margin-bottom:30px;">🐳</div>
+    <h1>Premium Microservices Games</h1>
+    <p style="margin-bottom:30px;opacity:0.9;">Play Tic-Tac-Toe, Number Guess & Sudoku</p>
+    <input type="text" id="username" placeholder="Enter your username">
+    <button onclick="login()">Start Gaming 🎮</button>
+  </div>
+</div>
+
+<div id="games-screen" class="screen">
+  <div class="header">
+    <div id="welcome-user" style="font-size:1.3rem;"></div>
+    <button onclick="logout()">Logout</button>
+  </div>
+  <div class="games-grid">
+    <div class="game-card" onclick="selectGame('tic-tac-toe')">
+      <div class="game-icon">✖️</div>
+      <div class="game-title">Tic-Tac-Toe</div>
+    </div>
+    <div class="game-card" onclick="selectGame('number-guess')">
+      <div class="game-icon">🎯</div>
+      <div class="game-title">Number Guess</div>
+    </div>
+    <div class="game-card" onclick="selectGame('sudoku')">
+      <div class="game-icon">🔢</div>
+      <div class="game-title">Sudoku</div>
+    </div>
+  </div>
+</div>
+
+<div id="game-screen" class="screen">
+  <div class="header">
+    <button class="back-btn" onclick="backToGames()">←</button>
+    <h2 id="game-title">Loading...</h2>
+  </div>
+  <div id="game-area"></div>
+  <div id="game-status" class="status">Loading game...</div>
+</div>
+
+<div id="sudoku-modal" class="sudoku-modal">
+  <div class="modal-content">
+    <div style="font-size:2.5rem;margin-bottom:20px;">Enter Number</div>
+    <input type="number" id="sudoku-number" class="modal-number" min="1" max="9" maxlength="1">
+    <br>
+    <button onclick="placeSudokuNumber()">Place Number</button>
+    <button onclick="closeSudokuModal()">Cancel</button>
+  </div>
+</div>
+
+<script>
+let currentUser = '', currentGame = '', currentGameData = {}, sudokuSelectedCell = null;
+
+function showScreen(screenId) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById(screenId).classList.add('active');
+}
+
+function login() {
+  const username = document.getElementById('username').value.trim();
+  if (!username) return alert('Please enter a username!');
+  currentUser = username;
+  document.getElementById('welcome-user').textContent = `Welcome back, ${username}!`;
+  showScreen('games-screen');
+}
+
+function logout() { 
+  currentUser = ''; 
+  document.getElementById('username').value = ''; 
+  showScreen('login-screen'); 
+}
+
+function backToGames() { showScreen('games-screen'); }
+
+async function selectGame(game) {
+  currentGame = game;
+  document.getElementById('game-title').textContent = game.replace('-', ' ').toUpperCase();
+  showScreen('game-screen');
+  await loadGame(game);
+}
+
+async function loadGame(game) {
+  document.getElementById('game-status').textContent = 'Loading game...';
+  
+  try {
+    const response = await fetch(`/api/games/${game}/start?user=${currentUser}`);
+    currentGameData = await response.json();
+    renderGame(game);
+  } catch (error) {
+    document.getElementById('game-status').innerHTML = `❌ Failed to load ${game}: ${error.message}`;
+  }
+}
+
+function renderGame(game) {
+  const gameArea = document.getElementById('game-area');
+  
+  if (game === 'tic-tac-toe') {
+    let html = '<div class="tic-board">';
+    currentGameData.board.forEach((cell, index) => {
+      const symbolClass = cell === 'X' ? 'x' : cell === 'O' ? 'o' : '';
+      html += `<div class="tic-cell ${symbolClass}" onclick="makeTicMove(${index})">${cell || ''}</div>`;
+    });
+    html += '</div>';
+    gameArea.innerHTML = html;
+    document.getElementById('game-status').textContent = currentGameData.status;
+  }
+  
+  else if (game === 'number-guess') {
+    gameArea.innerHTML = `
+      <div class="guess-container">
+        <div style="font-size:3rem;margin-bottom:30px;">🎯</div>
+        <input id="guessInput" type="number" min="1" max="100" placeholder="Guess 1-100">
+        <br>
+        <button onclick="makeGuess()" style="padding:18px 40px;margin-top:20px;font-size:18px;">Make Guess</button>
+      </div>
+    `;
+    document.getElementById('game-status').textContent = currentGameData.status;
+  }
+  
+  else if (game === 'sudoku') {
+    let html = '<div class="sudoku-grid">';
+    currentGameData.board.forEach((row, rowIndex) => {
+      row.forEach((cell, colIndex) => {
+        const isGiven = currentGameData.original[rowIndex][colIndex] !== 0;
+        html += `<div class="sudoku-cell ${isGiven ? 'given' : ''}" onclick="selectSudokuCell(${rowIndex},${colIndex})">${cell || ''}</div>`;
+      });
+    });
+    html += '</div>';
+    gameArea.innerHTML = html;
+    document.getElementById('game-status').textContent = currentGameData.status;
+  }
+}
+
+async function makeTicMove(position) {
+  try {
+    const response = await fetch('/api/games/tic-tac-toe/move', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({user: currentUser, position})
+    });
+    const result = await response.json();
+    if (result.success) {
+      currentGameData = result.game;
+      renderGame('tic-tac-toe');
+    }
+  } catch (e) {
+    document.getElementById('game-status').textContent = 'Move failed!';
+  }
+}
+
+function makeGuess() {
+  const guess = parseInt(document.getElementById('guessInput').value);
+  if (!guess || guess < 1 || guess > 100) return alert('Enter 1-100');
+  
+  fetch('/api/games/number-guess/guess', {
+    method: 'POST',
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify({user: currentUser, guess})
+  })
+  .then(res => res.json())
+  .then(result => {
+    if (result.success) {
+      currentGameData = result.game;
+      renderGame('number-guess');
+    }
+  });
+}
+
+function selectSudokuCell(row, col) {
+  const cell = document.querySelector(`[onclick="selectSudokuCell(${row},${col})"]`);
+  if (cell.classList.contains('given')) return;
+  
+  sudokuSelectedCell = {row, col};
+  document.getElementById('sudoku-modal').classList.add('active');
+  document.getElementById('sudoku-number').focus();
+}
+
+function placeSudokuNumber() {
+  const value = parseInt(document.getElementById('sudoku-number').value);
+  if (!value || value < 1 || value > 9) return alert('Enter 1-9');
+  
+  fetch('/api/games/sudoku/fill', {
+    method: 'POST',
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify({user: currentUser, row: sudokuSelectedCell.row, col: sudokuSelectedCell.col, value})
+  })
+  .then(res => res.json())
+  .then(result => {
+    if (result.success) {
+      currentGameData = result.game;
+      renderGame('sudoku');
+    } else {
+      alert(result.error || 'Invalid move');
+    }
+  });
+  closeSudokuModal();
+}
+
+function closeSudokuModal() {
+  document.getElementById('sudoku-modal').classList.remove('active');
+  document.getElementById('sudoku-number').value = '';
+}
+</script>
+</body>
+</html>
