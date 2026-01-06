@@ -34,6 +34,13 @@ services:
       - "3003"
     networks:
       - game-network
+  2048:
+    build: ./microservices/2048
+    container_name: minigame
+    expose:
+      - "3004"
+    networks:
+      - game-network
 
 networks:
   game-network:
